@@ -25,7 +25,13 @@ with gr.Blocks(theme='JohnSmith9982/small_and_pretty') as demo:
 
     prompt = gr.Textbox(label='Prompt', lines= 3, max_lines = 5)
     with gr.Row():
+        # Image gradio component bibliography https://www.gradio.app/docs/gradio/image
+        #
         inp_img = gr.Image(label="Image to Search",type="filepath")
+
+        # Video gradio component bibliography https://www.gradio.app/docs/gradio/video
+        #
+        #
         inp_video = gr.Video(label="Video to Search")
     token = gr.Textbox(label='Token', type='password')
 
