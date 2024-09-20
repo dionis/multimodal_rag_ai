@@ -1,1 +1,6 @@
+google-generativeai
+python-dotenv
+openai
 gradio
+langchain
+langchain-weaviate
