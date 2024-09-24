@@ -83,18 +83,18 @@ def multimodalrecomendation(*args):
     return
 
 EMBEDDING_API_KEY = os.getenv("WEVIATE_API_ADMIN_KEY")
-# client = weaviate.connect_to_embedded(
-#     version="1.24.21",
-#     environment_variables={
-#         "ENABLE_MODULES": "backup-filesystem,multi2vec-palm",
-#         "BACKUP_FILESYSTEM_PATH": "../backups",
-#     },
-#     headers={
-#         "X-PALM-Api-Key": EMBEDDING_API_KEY,
-#     }
-# )
-#
-# client.is_ready()
+client = weaviate.connect_to_embedded(
+    version="1.24.21",
+    environment_variables={
+        "ENABLE_MODULES": "backup-filesystem,multi2vec-palm",
+        "BACKUP_FILESYSTEM_PATH": "../backups",
+    },
+    headers={
+        "X-PALM-Api-Key": EMBEDDING_API_KEY,
+    }
+)
+
+client.is_ready()
 
 #########################################
 #
