@@ -1,6 +1,8 @@
 import time
 import gradio as gr
-import weaviate, os
+import weaviate
+from weaviate.classes.init import AdditionalConfig, Timeout, Auth
+import os
 
 #############################################################
 #
@@ -83,15 +85,24 @@ def multimodalrecomendation(*args):
     return
 
 EMBEDDING_API_KEY = os.getenv("WEVIATE_API_ADMIN_KEY")
-client = weaviate.connect_to_embedded(
-    version="1.24.21",
-    environment_variables={
-        "ENABLE_MODULES": "backup-filesystem,multi2vec-palm",
-        "BACKUP_FILESYSTEM_PATH": "../backups",
-    },
-    headers={
-        "X-PALM-Api-Key": EMBEDDING_API_KEY,
-    }
+WEVIATE_URL = os.getenv("WEVIATE_URL")
+
+# client = weaviate.connect_to_embedded(
+#     version="1.25.18",
+#     environment_variables={
+#         "ENABLE_MODULES": "backup-filesystem,multi2vec-palm",
+#         "BACKUP_FILESYSTEM_PATH": "../backups",
+#     },
+#     headers={
+#         "X-PALM-Api-Key": EMBEDDING_API_KEY,
+#     }
+# )
+
+client = weaviate.connect_to_weaviate_cloud(
+    cluster_url = WEVIATE_URL,
+    auth_credentials=Auth.api_key(EMBEDDING_API_KEY),
+    additional_config=AdditionalConfig(timeout=Timeout(init=10)),
+    #additional_config=AdditionalConfig(timeout=Timeout(init=10)),
 )
 
 client.is_ready()

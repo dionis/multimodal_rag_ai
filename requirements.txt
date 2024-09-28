@@ -4,3 +4,7 @@ openai
 gradio
 langchain
 langchain-weaviate
+weaviate-client==3.11.0
+#datasets
+#apache-beam
+#multiprocess==-0.70.11
