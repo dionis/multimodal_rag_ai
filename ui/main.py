@@ -62,6 +62,64 @@ def call_Gemmi_LLM(image_path: str, prompt: str) -> str:
 
     return to_markdown(response.text)
 
+def call_Gemmi_Video_LLM(image_path: str, prompt: str) -> str:
+    response = ''
+
+    #######
+    ##
+    ##  Bibliografy:
+    ##      Building a video insights generator using Gemini Flash
+    ##           https://medium.com/pythoneers/building-a-video-insights-generator-using-gemini-flash-e4ee4fefd3ab#8c0f
+    ##
+    ##    Gemini Flash API: 10-Minute Multimodal Crash Course
+    ##          https://www.youtube.com/watch?v=TJOrVx8ewpY
+    ##
+    ##
+    #########
+    # 1. Upload a video to the Files API
+    #
+    # The Gemini API directly accepts video file formats. The File API supports files up to 2GB in
+    # size and allows storage of up to 20GB per project. Uploaded files remain available for
+    #  2 days and cannot be downloaded from the API.
+    if image_path != '' and image_path != None:
+      video_file = genai.upload_file(path = image_path)
+
+      # 2. Get File
+      #
+      # After uploading a file, you can verify that the API has successfully received it by using the
+      # files.get method. This method allows you to view the files uploaded to the File API that are
+      # associated with the Cloud project linked to your API key. Only the file name
+      # and the URI are unique identifiers.
+
+      while video_file.state.name == "PROCESSING":
+          print('Waiting for video to be processed.')
+          time.sleep(10)
+          video_file = genai.get_file(video_file.name)
+
+      if video_file.state.name == "FAILED":
+          raise ValueError(video_file.state.name)
+
+      # 3. Response Generation
+      #
+      # After the video has been uploaded, you can make GenerateContent
+      # requests that reference the File API URI.
+
+        #
+        # Call generative model
+        #
+        #
+
+      model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
+
+      response = model.generate_content(
+            [prompt, video_file],
+            request_options={"timeout": 600}
+        )
+
+      genai.delete_file(video_file.name)
+
+    return to_markdown(response.text)
+
 def inference(prompt, inp_img, inp_video, token):
     time.sleep(3)
     result_call_video_gemmini = result_call_image_gemmini = ''
@@ -72,7 +130,7 @@ def inference(prompt, inp_img, inp_video, token):
 
     if inp_video != '' and inp_video is not None:
         print(f"Video Address to show and index ${inp_video}")
-        result_call_video_gemmini = call_Gemmi_LLM(inp_video, prompt)
+        result_call_video_gemmini = call_Gemmi_Video_LLM(inp_video, prompt)
 
     return [f" Prompt {prompt} \n\n Image:\n {result_call_image_gemmini},\n\n\n Video:\n {result_call_video_gemmini}","B"]
 
@@ -98,11 +156,23 @@ WEVIATE_URL = os.getenv("WEVIATE_URL")
 #     }
 # )
 
+####
+#
+#  Bibliografy:
+#     https://weaviate.io/developers/weaviate/model-providers/google/generative#ai-studio
+#
+#
+#####
+
 client = weaviate.connect_to_weaviate_cloud(
     cluster_url = WEVIATE_URL,
     auth_credentials=Auth.api_key(EMBEDDING_API_KEY),
     additional_config=AdditionalConfig(timeout=Timeout(init=10)),
     #additional_config=AdditionalConfig(timeout=Timeout(init=10)),
+
+    headers = {
+        "X-Google-Vertex-Api-Key": GOOGLE_API_KEY,
+    }
 )
 
 client.is_ready()
