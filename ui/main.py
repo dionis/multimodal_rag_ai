@@ -270,13 +270,15 @@ with gr.Blocks(theme = 'JohnSmith9982/small_and_pretty') as demo:
         with gr.Row():
             # Image gradio component bibliography https://www.gradio.app/docs/gradio/image
             #
-            inp_img = gr.Image(label="Image to Index in Weaviate",type="filepath")
-            index_image_btn = gr.Button("Index Image", size="lg", variant="primary")
+            with gr.Column():
+                inp_img = gr.Image(label="Image to Index in Weaviate",type="filepath")
+                index_image_btn = gr.Button("Index Image", size="lg", variant="primary")
             # Video gradio component bibliography https://www.gradio.app/docs/gradio/video
             #
             #
-            inp_video = gr.Video(label="Video to Index in Weaviate")
-            index_video_btn = gr.Button("Index Video", size="lg", variant="primary")
+            with gr.Column():
+                inp_video = gr.Video(label="Video to Index in Weaviate")
+                index_video_btn = gr.Button("Index Video", size="lg", variant="primary")
         textToSearch = gr.Textbox(label='Search query for RAG retrieval', type='text')
 
 
