@@ -25,6 +25,7 @@ import textwrap
 import PIL.Image
 import google.generativeai as genai
 from google.api_core.client_options import ClientOptions
+import base64
 
 _ = load_dotenv(find_dotenv('../config/.env')) # read local .env file
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
@@ -134,10 +135,6 @@ def inference(prompt, inp_img, inp_video, token):
 
     return [f" Prompt {prompt} \n\n Image:\n {result_call_image_gemmini},\n\n\n Video:\n {result_call_video_gemmini}","B"]
 
-def multimodalraginference(*args):
-    gr.Warning("Building action!!!!")
-    return
-
 def multimodalrecomendation(*args):
     gr.Warning("Building action!!!!")
     return
@@ -164,6 +161,13 @@ WEVIATE_URL = os.getenv("WEVIATE_URL")
 #
 #####
 
+
+
+# Helper function to convert a file to base64 representation
+def toBase64(path):
+    with open(path, 'rb') as file:
+        return base64.b64encode(file.read()).decode('utf-8')
+
 client = weaviate.connect_to_weaviate_cloud(
     cluster_url = WEVIATE_URL,
     auth_credentials=Auth.api_key(EMBEDDING_API_KEY),
@@ -177,6 +181,47 @@ client = weaviate.connect_to_weaviate_cloud(
 
 client.is_ready()
 
+def indexVideoInWeaviate(inp_video):
+    time.sleep(3)
+    result_call_video_gemmini = result_call_image_gemmini = ''
+    prompt = SYSTEM_PROMPT_IDENTIFIED
+
+    if inp_img != '' and inp_img is not None:
+      result_call_image_gemmini = call_Gemmi_LLM(inp_img, prompt)
+
+    if inp_video != '' and inp_video is not None:
+        print(f"Video Address to show and index ${inp_video}")
+        result_call_video_gemmini = call_Gemmi_Video_LLM(inp_video, prompt)
+
+    return [f" Prompt {prompt} \n\n Image:\n {result_call_image_gemmini},\n\n\n Video:\n {result_call_video_gemmini}","B"]
+
+def indexImageInWeaviate(inp_img):
+    time.sleep(3)
+    result_call_video_gemmini = result_call_image_gemmini = ''
+    prompt = SYSTEM_PROMPT_IDENTIFIED
+
+    if inp_img != '' and inp_img is not None:
+      result_call_image_gemmini = call_Gemmi_LLM(inp_img, prompt)
+
+    if inp_video != '' and inp_video is not None:
+        print(f"Video Address to show and index ${inp_video}")
+        result_call_video_gemmini = call_Gemmi_Video_LLM(inp_video, prompt)
+
+    return [f" Prompt {prompt} \n\n Image:\n {result_call_image_gemmini},\n\n\n Video:\n {result_call_video_gemmini}","B"]
+
+def multimodalraginference(search_text):
+    time.sleep(3)
+    result_call_video_gemmini = result_call_image_gemmini = ''
+    prompt = SYSTEM_PROMPT_IDENTIFIED
+
+    if inp_img != '' and inp_img is not None:
+        result_call_image_gemmini = call_Gemmi_LLM(inp_img, prompt)
+
+    if inp_video != '' and inp_video is not None:
+        print(f"Video Address to show and index ${inp_video}")
+        result_call_video_gemmini = call_Gemmi_Video_LLM(inp_video, prompt)
+
+    return [f" Prompt {prompt} \n\n Image:\n {result_call_image_gemmini},\n\n\n Video:\n {result_call_video_gemmini}"]
 #########################################
 #
 #   Bibliografy:
@@ -186,7 +231,7 @@ client.is_ready()
 ###########################################################
 
 with gr.Blocks(theme = 'JohnSmith9982/small_and_pretty') as demo:
-    with gr.Tab("Multimodal Search "):
+    with gr.Tab("Multimodal Search with Gemmini (Google) "):
         message = ("### Use LLM Multimodal Prompt search with Gradio using these \
         [video tutorial](https://www.youtube.com/watch?v=ABNxNFPqIGQ&t=4s) and Hugging Face API")
         gr.Markdown("<center><h2>Open LLM Explorer</h2></center>")
@@ -216,9 +261,48 @@ with gr.Blocks(theme = 'JohnSmith9982/small_and_pretty') as demo:
 
         generate_btn.click(fn= inference, inputs=[prompt, inp_img, inp_video, token],outputs=[llama_output,groq_output])
     with gr.Tab("RAG Multimodal"):
-        ragMultimodal_button = gr.Button("In Building")
+        message = ("### Use Weaviate platworm for index Multimedia resources \
+        [video tutorial](https://www.youtube.com/watch?v=ABNxNFPqIGQ&t=4s) and Hugging Face API")
+        gr.Markdown("<center><h2>Weaviate index data</h2></center>")
+        gr.Markdown(message)
 
-        ragMultimodal_button.click(fn = multimodalraginference)
+        prompt = gr.Textbox(label = 'Prompt', lines= 3, max_lines = 5, value = SYSTEM_PROMPT_IDENTIFIED)
+        with gr.Row():
+            # Image gradio component bibliography https://www.gradio.app/docs/gradio/image
+            #
+            inp_img = gr.Image(label="Image to Index in Weaviate",type="filepath")
+            index_image_btn = gr.Button("Index Image", size="lg", variant="primary")
+            # Video gradio component bibliography https://www.gradio.app/docs/gradio/video
+            #
+            #
+            inp_video = gr.Video(label="Video to Index in Weaviate")
+            index_video_btn = gr.Button("Index Video", size="lg", variant="primary")
+        textToSearch = gr.Textbox(label='Search query for RAG retrieval', type='text')
+
+
+        with gr.Group():
+            with gr.Row():
+                generate_btn = gr.Button("Search with RAG in Weaviate", size = "lg", variant = "primary")
+
+
+        with gr.Row() as row_output:
+           video_result_output = gr.Markdown("##Llama3.1 70B-instruct Output")
+           image_result_output = gr.Markdown("##Llama3.1 70B-instruct Output")
+
+        index_video_btn.click(
+            fn = indexVideoInWeaviate,
+            inputs=[prompt, inp_img, inp_video, token]
+        )
+        index_image_btn.click(
+            fn = indexImageInWeaviate,
+            inputs = [prompt, inp_img, inp_video, token]
+        )
+        generate_btn.click(
+            fn = multimodalraginference,
+            inputs = [textToSearch],
+            outputs = [ image_result_output, video_result_output]
+        )
+
     with gr.Tab("Multimodal Recommendation"):
         ragMultimodal_button = gr.Button("In Building")
 
