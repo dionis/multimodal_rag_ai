@@ -2,7 +2,7 @@ import time
 import gradio as gr
 import weaviate
 from weaviate.classes.init import AdditionalConfig, Timeout, Auth
-import os
+
 
 #############################################################
 #
